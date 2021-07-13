@@ -129,23 +129,15 @@ void Init::InitArena(SCGrid &arena_prev, SCGrid &arena_current,
         music_message.flush("info");
     } else if (DATA.Initial_profile == 43) {
         // initial condition from the JETSCAPE framework
-        music_message << "Using Initial_profile=" << DATA.Initial_profile 
+        music_message << "Using Initial_profile=" << DATA.Initial_profile
                       << ". NOT overwriting lattice dimensions:";
         music_message.flush("info");
 
-        const int nx = static_cast<int>(
-                sqrt(jetscape_initial_energy_density.size()/DATA.neta));
-        const int ny = nx;
-        DATA.nx = nx;
-        DATA.ny = ny;
-        DATA.x_size = DATA.delta_x*nx;
-        DATA.y_size = DATA.delta_y*ny;
-
         music_message << "neta = " << DATA.neta
-                      << ", nx = " << nx << ", ny = " << ny;
+                      << ", nx = " << DATA.nx << ", ny = " << DATA.ny;
         music_message.flush("info");
         music_message << "deta=" << DATA.delta_eta
-                      << ", dx=" << DATA.delta_x 
+                      << ", dx=" << DATA.delta_x
                       << ", dy=" << DATA.delta_y;
         music_message.flush("info");
         music_message << "x_size = "     << DATA.x_size
@@ -153,7 +145,7 @@ void Init::InitArena(SCGrid &arena_prev, SCGrid &arena_current,
                       << ", eta_size = " << DATA.eta_size;
         music_message.flush("info");
 
-        if (jetscape_initial_energy_density.size() / (static_cast<size_t>(nx) * static_cast<size_t>(ny)) < DATA.neta) {
+        if (jetscape_initial_energy_density.size() / (static_cast<size_t>(DATA.nx) * static_cast<size_t>(DATA.ny)) < DATA.neta) {
             music_message << "Init::InitArena: "
                           << "Initial profile size "
                           << jetscape_initial_energy_density.size()
