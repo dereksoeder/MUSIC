@@ -137,17 +137,34 @@ void MUSIC::initialize_hydro_from_jetscape_preequilibrium_vectors(
         vector<double> pi_23_in, vector<double> pi_33_in,
         vector<double> Bulk_pi_in) {
 
-    DATA.Initial_profile = 42;
     clean_all_the_surface_files();
 
-    if (nz > 1) {
-        DATA.boost_invariant = false;
-        DATA.delta_eta       = dz;
-        DATA.neta            = nz;
-        DATA.eta_size        = nz*dz;
+    if (DATA.Initial_profile == 43) {
+        music_message << "Initial_profile = " << DATA.Initial_profile
+                      << " is preventing the following parameter assignments:\n";
+
+        if (nz > 1) {
+            music_message << "  boost_invariant: from " << DATA.boost_invariant << " to " << false << "\n";
+            music_message << "  delta_eta:       from " << DATA.delta_eta       << " to " << dz    << "\n";
+            music_message << "  neta:            from " << DATA.neta            << " to " << nz    << "\n";
+            music_message << "  eta_size:        from " << DATA.eta_size        << " to " << nz*dz << "\n";
+        }
+        music_message     << "  delta_x:         from " << DATA.delta_x << " to " << dx << "\n";
+        music_message     << "  delta_y:         from " << DATA.delta_y << " to " << dx;
+
+        music_message.flush("info");
+    } else {
+        DATA.Initial_profile = 42;
+
+        if (nz > 1) {
+            DATA.boost_invariant = false;
+            DATA.delta_eta       = dz;
+            DATA.neta            = nz;
+            DATA.eta_size        = nz*dz;
+        }
+        DATA.delta_x = dx;
+        DATA.delta_y = dx;
     }
-    DATA.delta_x = dx;
-    DATA.delta_y = dx;
 
     Init initialization(eos, DATA, hydro_source_terms_ptr);
     initialization.get_jetscape_preequilibrium_vectors(

@@ -31,7 +31,7 @@ Advance::Advance(const EOS &eosIn, const InitData &DATA_in,
     hydro_source_terms_ptr = hydro_source_ptr_in;
     flag_add_hydro_source = false;
     if (!Util::weak_ptr_is_uninitialized(hydro_source_terms_ptr)) {
-        if (DATA.Initial_profile == 42) {
+        if (DATA.Initial_profile == 42 || DATA.Initial_profile == 43) {
             if (hydro_source_terms_ptr.lock()->get_number_of_sources() > 0) {
                 flag_add_hydro_source = true;
             }

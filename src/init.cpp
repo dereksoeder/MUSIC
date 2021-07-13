@@ -127,6 +127,40 @@ void Init::InitArena(SCGrid &arena_prev, SCGrid &arena_current,
                       << ", y_size = "   << DATA.y_size
                       << ", eta_size = " << DATA.eta_size;
         music_message.flush("info");
+    } else if (DATA.Initial_profile == 43) {
+        // initial condition from the JETSCAPE framework
+        music_message << "Using Initial_profile=" << DATA.Initial_profile 
+                      << ". NOT overwriting lattice dimensions:";
+        music_message.flush("info");
+
+        const int nx = static_cast<int>(
+                sqrt(jetscape_initial_energy_density.size()/DATA.neta));
+        const int ny = nx;
+        DATA.nx = nx;
+        DATA.ny = ny;
+        DATA.x_size = DATA.delta_x*nx;
+        DATA.y_size = DATA.delta_y*ny;
+
+        music_message << "neta = " << DATA.neta
+                      << ", nx = " << nx << ", ny = " << ny;
+        music_message.flush("info");
+        music_message << "deta=" << DATA.delta_eta
+                      << ", dx=" << DATA.delta_x 
+                      << ", dy=" << DATA.delta_y;
+        music_message.flush("info");
+        music_message << "x_size = "     << DATA.x_size
+                      << ", y_size = "   << DATA.y_size
+                      << ", eta_size = " << DATA.eta_size;
+        music_message.flush("info");
+
+        if (jetscape_initial_energy_density.size() / (static_cast<size_t>(nx) * static_cast<size_t>(ny)) < DATA.neta) {
+            music_message << "Init::InitArena: "
+                          << "Initial profile size "
+                          << jetscape_initial_energy_density.size()
+                          << " is smaller than described by the input file!";
+            music_message.flush("error");
+            exit(1);
+        }
     } else if (DATA.Initial_profile == 101) {
         music_message << "Using Initial_profile = " << DATA.Initial_profile;
         music_message.flush("info");
@@ -225,7 +259,7 @@ void Init::InitTJb(SCGrid &arena_prev, SCGrid &arena_current) {
         for (int ieta = 0; ieta < arena_current.nEta(); ieta++) {
             initial_AMPT_XY(ieta, arena_prev, arena_current);
         }
-    } else if (DATA.Initial_profile == 42) {
+    } else if (DATA.Initial_profile == 42 || DATA.Initial_profile == 43) {
         // initialize hydro with vectors from JETSCAPE
         music_message.info(" ----- information on initial distribution -----");
         music_message << "initialized with a JETSCAPE initial condition.";
@@ -878,7 +912,8 @@ void Init::initial_with_jetscape(int ieta, SCGrid &arena_prev,
             const double rhob = 0.0;
             double epsilon = 0.0;
             //const int idx = iy + ix*ny + ieta*ny*nx;  // old trento convension
-            const int idx = ieta + iy*neta + ix*ny*neta;  // new trento convension
+            //const int idx = ieta + iy*neta + ix*ny*neta;  // new trento convension
+            const int idx = ix + iy*nx + ieta*nx*ny;  // newer trento convension
             epsilon = (jetscape_initial_energy_density[idx]
                        *DATA.sFactor/hbarc);  // 1/fm^4
             if (epsilon < 0.00000000001)
