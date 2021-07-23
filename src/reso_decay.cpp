@@ -14,6 +14,8 @@
 #include "./freeze.h"
 #include "./int.h"
 
+#undef WANT_EXCESSIVE_OUTPUT
+
 /*************************************************
 *
 *   Edndp3
@@ -96,6 +98,7 @@ double Freeze::Edndp3(double yr, double ptr, double phirin, int res_num) {
     }
   
     if (std::isnan(val1)) {
+#ifdef WANT_EXCESSIVE_OUTPUT
         fprintf(stderr,"\n number=%d\n\n",res_num);
         fprintf(stderr,"val1=%f\n",val1);
         fprintf(stderr,"f1=%f\n",f1);
@@ -121,6 +124,7 @@ double Freeze::Edndp3(double yr, double ptr, double phirin, int res_num) {
         fprintf(stderr,"pt2=%f\n",particleList[pn].pt[npt]);
         fprintf(stderr,"y1=%f\n",particleList[pn].y[ny-1]);
         fprintf(stderr,"y2=%f\n",particleList[pn].y[ny]);
+#endif
     }
 
     f1 = Util::lin_int(phiArray[nphi-1], phiArray[nphi], 
@@ -155,6 +159,7 @@ double Freeze::Edndp3(double yr, double ptr, double phirin, int res_num) {
                                particleList[pn].y[ny], val1, val2, yr);
 
     if (std::isnan(val)) {
+#ifdef WANT_EXCESSIVE_OUTPUT
         fprintf(stderr,"val=%f\n",val);
         fprintf(stderr,"val1=%f\n",val1);
         fprintf(stderr,"val2=%f\n",val2);
@@ -180,6 +185,7 @@ double Freeze::Edndp3(double yr, double ptr, double phirin, int res_num) {
         fprintf(stderr,"y1=%f\n",particleList[pn].y[ny-1]);
         fprintf(stderr,"y2=%f\n",particleList[pn].y[ny]);
         fprintf(stderr,"yR=%f\n",yr);
+#endif
     }
   
     return val;
@@ -220,6 +226,7 @@ double Freeze::dnpir2N (double phi, void *para1)
     {
       if ((fabs (cphiR) > 1.01) || (fabs (sphiR) > 1.01))
     {
+#ifdef WANT_EXCESSIVE_OUTPUT
       //  printf ("  |phir| = %15.8lf  > 1 ! \n", phiR);
       printf (" phi %15.8le D %15.8le \n", phi, D);
       printf (" eR %15.8le plR %15.8le \n", eR, plR);
@@ -239,6 +246,7 @@ double Freeze::dnpir2N (double phi, void *para1)
       printf (" m2 %15.8le \n", para->m2);
       printf (" m3 %15.8le \n", para->m3);
       printf (" mr %15.8le \n", para->mr);
+#endif
       if (cphiR > 1.0)
         cphiR = 1.0;
       if (cphiR < -1.0)
@@ -479,11 +487,13 @@ void Freeze::add_reso(int pn, int pnR, int k, int j) {
                             m1, m2, mr,
                             particleList[pnR].number);
                     if (std::isnan(spectrum)) {
+#ifdef WANT_EXCESSIVE_OUTPUT
                         fprintf(stderr, "2 pt=%f\n",
                                 particleList[pn].pt[l]);
                         fprintf(stderr, "2 number=%d\n",
                                 particleList[pnR].number);
                         fprintf(stderr, "2 Edn..=%f\n", spectrum);
+#endif
                     } else {
                         // Call the 2-body decay integral and
                         // add its contribution to the daughter
@@ -519,11 +529,13 @@ void Freeze::add_reso(int pn, int pnR, int k, int j) {
                             m1, m2, mr,
                             particleList[pnR].number);
                     if (std::isnan(spectrum)) {
+#ifdef WANT_EXCESSIVE_OUTPUT
                         fprintf(stderr, "2 pt=%f\n",
                                 particleList[pn].pt[l]);
                         fprintf(stderr, "2 number=%d\n",
                                 particleList[pnR].number);
                         fprintf(stderr, "2 Edn..=%f\n", spectrum);
+#endif
                     } else {
                         // Call the 2-body decay integral and
                         // add its contribution to the daughter
@@ -585,9 +597,11 @@ void Freeze::add_reso(int pn, int pnR, int k, int j) {
                             m1, m2, m3, mr, norm3, 
                             particleList[pnR].number);
                     if (std::isnan(spectrum)) {
+#ifdef WANT_EXCESSIVE_OUTPUT
                         fprintf(stderr,"3 number=%d\n",
                                 particleList[pnR].number);
                         fprintf(stderr,"3 Edn..=%f\n", spectrum);
+#endif
                     } else {
                         // Call the 3-body decay integral and
                         // add its contribution to the daughter
@@ -624,9 +638,11 @@ void Freeze::add_reso(int pn, int pnR, int k, int j) {
                             m1, m2, m3, mr, norm3, 
                             particleList[pnR].number);
                     if (std::isnan(spectrum)) {
+#ifdef WANT_EXCESSIVE_OUTPUT
                         fprintf(stderr,"3 number=%d\n",
                                 particleList[pnR].number);
                         fprintf(stderr,"3 Edn..=%f\n", spectrum);
+#endif
                     } else {
                         // Call the 3-body decay integral and
                         // add its contribution to the daughter
@@ -697,8 +713,10 @@ void Freeze::add_reso(int pn, int pnR, int k, int j) {
                             m1, m2, m3, mr, norm3,
                             particleList[pnR].number);
                     if (std::isnan(spectrum)) {
+#ifdef WANT_EXCESSIVE_OUTPUT
                         fprintf(stderr, "3 number=%d\n",
                                 particleList[pnR].number);
+#endif
                     } else {
                         for (int n = 0; n < ny; n++) {
                             particleList[pn].dNdydptdphi[n][l][i] += (
@@ -727,8 +745,10 @@ void Freeze::add_reso(int pn, int pnR, int k, int j) {
                             m1, m2, m3, mr, norm3,
                             particleList[pnR].number);
                     if (std::isnan(spectrum)) {
+#ifdef WANT_EXCESSIVE_OUTPUT
                         fprintf(stderr, "3 number=%d\n",
                                 particleList[pnR].number);
+#endif
                     } else {
                         particleList[pn].dNdydptdphi[n][l][i] += (
                                 decay[j].branch*spectrum);
