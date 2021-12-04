@@ -136,6 +136,30 @@ void Init::InitArena(SCGrid &arena_prev, SCGrid &arena_current,
         music_message << "dx = " << DATA.delta_x << ", dy = " << DATA.delta_y
                       << ", deta = " << DATA.delta_eta;
         music_message.flush("info");
+    } else if (DATA.Initial_profile == 333) {  // 333: Trento-3D grid with header
+        music_message.info(DATA.initName);
+        ifstream profile(DATA.initName.c_str());
+        std::string dummy;
+        int nx, ny, neta;
+        double deta, dx, dy, dummy2;
+        // read the first line with general info
+        profile >> dummy >> dummy >> dummy2
+                >> dummy >> neta >> dummy >> nx >> dummy >> ny
+                >> dummy >> deta >> dummy >> dx >> dummy >> dy;
+        profile.close();
+        music_message << "Using Initial_profile=" << DATA.Initial_profile
+                      << ". Overwriting lattice dimensions:";
+        DATA.nx = nx;
+        DATA.ny = ny;
+        DATA.neta = neta;
+        DATA.delta_x = dx;
+        DATA.delta_y = dy;
+        DATA.delta_eta = deta;
+
+        music_message << "neta=" << neta << ", nx=" << nx << ", ny=" << ny;
+        music_message << ", deta=" << DATA.delta_eta << ", dx=" << DATA.delta_x
+                      << ", dy=" << DATA.delta_y;
+        music_message.flush("info");
     }
 
     // initialize arena
@@ -240,6 +264,13 @@ void Init::InitTJb(SCGrid &arena_prev, SCGrid &arena_current) {
         music_message << "file name used: " << DATA.initName;
         music_message.flush("info");
         initial_UMN_with_rhob(arena_prev, arena_current);
+    } else if (DATA.Initial_profile == 333) {  // 333: Trento-3D grid with header
+        // read in the profile from file
+        // - Trento initial condition
+        music_message.info(" ----- information on initial distribution -----");
+        music_message << "file name used: " << DATA.initName;
+        music_message.flush("info");
+        initial_Trento_3D(arena_prev, arena_current);
     }
     music_message.info("initial distribution done.");
 }
@@ -835,6 +866,74 @@ void Init::initial_AMPT_XY(int ieta, SCGrid &arena_prev,
             arena_prev(ix, iy, ieta) = arena_current(ix, iy, ieta);
         }
     }
+}
+
+void Init::initial_Trento_3D(SCGrid &arena_prev, SCGrid &arena_current) {
+    // Initial_profile == 9 : full T^\mu\nu
+    // Initial_profile == 91: e and u^\mu
+    // Initial_profile == 92: e only
+    int entropy_flag = DATA.initializeEntropy;
+    ifstream profile(DATA.initName.c_str());
+
+    std::string dummy;
+    // read the information line
+    std::getline(profile, dummy);
+
+    const int nx = arena_current.nX();
+    const int ny = arena_current.nY();
+    const int neta = arena_current.nEta();
+
+    double density;
+    for (int ieta = 0; ieta < neta; ieta++) {
+        for (int ix = 0; ix < nx; ix++) {
+            // read the one slice
+            std::getline(profile, dummy);
+            std::stringstream ss(dummy);
+            for (int iy = 0; iy < ny; iy++) {
+                ss >> density;
+
+                double epsilon=0.0, rhob=0.0;
+
+                if (entropy_flag == 0) {
+                    epsilon = density*DATA.sFactor/hbarc;  // 1/fm^4
+                } else {
+                    double local_sd = (density*DATA.sFactor);
+                    epsilon = eos.get_s2e(local_sd, rhob);
+                }
+                if (epsilon < 0.00000000001)
+                    epsilon = 0.00000000001;
+
+
+                arena_current(ix, iy, ieta).epsilon = epsilon;
+                arena_current(ix, iy, ieta).rhob = rhob;
+
+                arena_current(ix, iy, ieta).u[0] = 1.0;
+                arena_current(ix, iy, ieta).u[1] = 0.0;
+                arena_current(ix, iy, ieta).u[2] = 0.0;
+                arena_current(ix, iy, ieta).u[3] = 0.0;
+
+                arena_current(ix, iy, ieta).pi_b = 0.0;
+
+                arena_current(ix, iy, ieta).Wmunu[0] = 0.0;
+                arena_current(ix, iy, ieta).Wmunu[1] = 0.0;
+                arena_current(ix, iy, ieta).Wmunu[2] = 0.0;
+                arena_current(ix, iy, ieta).Wmunu[3] = 0.0;
+                arena_current(ix, iy, ieta).Wmunu[4] = 0.0;
+                arena_current(ix, iy, ieta).Wmunu[5] = 0.0;
+                arena_current(ix, iy, ieta).Wmunu[6] = 0.0;
+                arena_current(ix, iy, ieta).Wmunu[7] = 0.0;
+                arena_current(ix, iy, ieta).Wmunu[8] = 0.0;
+                arena_current(ix, iy, ieta).Wmunu[9] = 0.0;
+
+                arena_prev(ix, iy, ieta) = arena_current(ix, iy, ieta);
+            }
+        }
+        double epsilon_center=arena_current(nx/2, nx/2, ieta).epsilon;
+        double epsilon_off_center=arena_current(nx/2, nx/3, ieta).epsilon;
+        double epsilon_off_center2=arena_current(nx/3, nx/2, ieta).epsilon;
+        std::cout << ieta << " " << eos.get_temperature(epsilon_center,0.0)*hbarc << " " << eos.get_temperature(epsilon_off_center,0.0)*hbarc << " " << eos.get_temperature(epsilon_off_center2,0.0)*hbarc << "\n";
+    }
+    profile.close();
 }
 
 
