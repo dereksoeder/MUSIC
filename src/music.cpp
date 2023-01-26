@@ -8,12 +8,16 @@
 #include <string>
 #include "music.h"
 #include "init.h"
-#include "freeze.h"
 #include "evolve.h"
 #include "dissipative.h"
 #include "data_struct.h"
 #include "hydro_source_strings.h"
 #include "hydro_source_ampt.h"
+#include "hydro_source_TATB.h"
+
+#ifdef GSL
+    #include "freeze.h"
+#endif
 
 using std::vector;
 
@@ -50,7 +54,8 @@ void MUSIC::add_hydro_source_terms(
 
 //! This function setup source terms from dynamical initialization
 void MUSIC::generate_hydro_source_terms() {
-    if (DATA.Initial_profile == 13) {  // MC-Glauber-LEXUS
+    if (DATA.Initial_profile == 13 || DATA.Initial_profile == 131) {
+        // MC-Glauber-LEXUS
         auto hydro_source_ptr = std::shared_ptr<HydroSourceStrings> (
                                             new HydroSourceStrings (DATA));
         add_hydro_source_terms(hydro_source_ptr);
@@ -58,12 +63,17 @@ void MUSIC::generate_hydro_source_terms() {
         auto hydro_source_ptr = std::shared_ptr<HydroSourceAMPT> (
                                             new HydroSourceAMPT (DATA));
         add_hydro_source_terms(hydro_source_ptr);
+    } else if (DATA.Initial_profile == 112 || DATA.Initial_profile == 113) {
+        // source from TA and TB
+        auto hydro_source_ptr = std::shared_ptr<HydroSourceTATB> (
+                                            new HydroSourceTATB (DATA));
+        add_hydro_source_terms(hydro_source_ptr);
     }
 }
 
 
 void MUSIC::clean_all_the_surface_files() {
-    system("rm surface.dat surface?.dat surface??.dat 2> /dev/null");
+    system_status_ = system("rm surface*.dat 2> /dev/null");
 }
 
 
@@ -99,9 +109,11 @@ int MUSIC::run_hydro() {
 
 //! this is a shell function to run Cooper-Frye
 int MUSIC::run_Cooper_Frye() {
+#ifdef GSL
     Freeze cooper_frye(&DATA);
     cooper_frye.CooperFrye_pseudo(DATA.particleSpectrumNumber, mode,
                                   &DATA, &eos);
+#endif
     return(0);
 }
 
@@ -122,12 +134,14 @@ void MUSIC::output_transport_coefficients() {
     temp_dissipative_ptr.output_eta_over_s_along_const_sovernB();
     temp_dissipative_ptr.output_kappa_T_and_muB_dependence();
     temp_dissipative_ptr.output_kappa_along_const_sovernB();
+    temp_dissipative_ptr.output_zeta_over_s_T_and_muB_dependence();
+    temp_dissipative_ptr.output_zeta_over_s_along_const_sovernB();
 }
 
 
 void MUSIC::initialize_hydro_from_jetscape_preequilibrium_vectors(
         const double dx, const double dz, const double z_max, const int nz,
-        vector<double> e_in,
+        vector<double> e_in, vector<double> P_in,
         vector<double> u_tau_in, vector<double> u_x_in,
         vector<double> u_y_in,   vector<double> u_eta_in,
         vector<double> pi_00_in, vector<double> pi_01_in,
@@ -156,11 +170,15 @@ void MUSIC::initialize_hydro_from_jetscape_preequilibrium_vectors(
     } else {
         DATA.Initial_profile = 42;
 
+        DATA.neta = nz;
         if (nz > 1) {
             DATA.boost_invariant = false;
-            DATA.delta_eta       = dz;
-            DATA.neta            = nz;
-            DATA.eta_size        = nz*dz;
+            DATA.delta_eta = dz;
+            DATA.eta_size = nz*dz;
+        } else {
+            DATA.boost_invariant = true;
+            DATA.delta_eta = 0.1;
+            DATA.eta_size = 0.;
         }
         DATA.delta_x = dx;
         DATA.delta_y = dx;
@@ -168,7 +186,7 @@ void MUSIC::initialize_hydro_from_jetscape_preequilibrium_vectors(
 
     Init initialization(eos, DATA, hydro_source_terms_ptr);
     initialization.get_jetscape_preequilibrium_vectors(
-        e_in, u_tau_in, u_x_in, u_y_in, u_eta_in,
+        e_in, P_in, u_tau_in, u_x_in, u_y_in, u_eta_in,
         pi_00_in, pi_01_in, pi_02_in, pi_03_in, pi_11_in, pi_12_in, pi_13_in,
         pi_22_in, pi_23_in, pi_33_in, Bulk_pi_in);
     initialization.InitArena(arena_prev, arena_current, arena_future);
