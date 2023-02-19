@@ -19,6 +19,10 @@ typedef struct init_data {
         { 0,0,0,1}}};
 
     int echo_level;
+    bool reRunHydro;
+    int reRunCount;
+
+    bool beastMode;
 
     int mode;               //!< 1: do everything;
                             //!< 2: do hydro evolution only;
@@ -63,6 +67,7 @@ typedef struct init_data {
     double stringSourceSigmaX;
     double stringSourceSigmaEta;
     double stringTransverseShiftFrac;
+    double preEqFlowFactor;
 
     int nx;
     int ny;
@@ -79,9 +84,14 @@ typedef struct init_data {
     double delta_y;
     double delta_eta;
     double delta_tau;
+    double dtaudxRatio;
 
+    bool resetDtau;
     int rk_order;
     double minmod_theta;
+
+    int CoorType;       //!< 0: Milne; 1: Cartesian
+    int Test1DDirection;
 
     double sFactor;     //!< overall normalization on energy density profile
     int whichEOS;       //!< type of EoS
@@ -115,6 +125,10 @@ typedef struct init_data {
     int T_dependent_shear_to_s;
     int muB_dependent_shear_to_s;
 
+    double shear_muBDep_alpha;
+    double shear_muBDep_slope;
+    double shear_muBDep_scale;
+
     //! flag to include temperature dependent zeta/s(T)
     int T_dependent_zeta_over_s;
 
@@ -145,9 +159,10 @@ typedef struct init_data {
 
     //! flag to control the temperature dependence of zeta/s(T) if "T_dependent_bulk_to_s==10"
     double bulk_10_max;
-    double bulk_10_width_high;    // GeV
-    double bulk_10_width_low;     // GeV
-    double bulk_10_Tpeak;         // GeV
+    double bulk_10_width_high;              // GeV
+    double bulk_10_width_low;               // GeV
+    double bulk_10_Tpeak;                   // GeV
+    double bulk_10_Tpeak_muBcurv;           // GeV
 
     //! multiplicative factors for the relaxation times
     double shear_relax_time_factor;
@@ -160,7 +175,7 @@ typedef struct init_data {
     int include_second_order_terms;
 
     //! flag to include vorticity coupling terms in shear and diffusion
-    int include_vorticity_terms;
+    bool include_vorticity_terms;
 
     //! flag to output vorticity evolution
     int output_vorticity;
@@ -217,6 +232,7 @@ typedef struct init_data {
     int freeze_eps_flag;
     std::string freeze_list_filename;
     bool freeze_surface_in_binary;
+    bool surface_in_memory;
 
     // for calculation of spectra
     int pseudofreeze;    //! flag to compute spectra in pseudorapdity

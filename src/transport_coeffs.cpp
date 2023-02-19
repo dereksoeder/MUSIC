@@ -56,9 +56,9 @@ double TransportCoeffs::get_temperature_dependence_shear_profile(
 double TransportCoeffs::get_muB_dependence_shear_profile(
                                                 const double muB_in_fm) const {
     const double muB_in_GeV = muB_in_fm*hbarc;
-    const double alpha = 0.8;
-    const double muB_slope = 0.9;
-    const double muB_scale = 0.6;
+    const double alpha = DATA.shear_muBDep_alpha;
+    const double muB_slope = DATA.shear_muBDep_slope;
+    const double muB_scale = DATA.shear_muBDep_scale;
     double f_muB = 1. + muB_slope*pow(muB_in_GeV/muB_scale, alpha);
     return(f_muB);
 }
@@ -101,7 +101,7 @@ double TransportCoeffs::get_temperature_dependent_eta_over_s_sims(
     double high_T_slope = DATA.shear_3_high_T_slope_in_GeV;
     double eta_over_s_at_kink = DATA.shear_3_at_kink;
 
-    const double eta_over_s_min = 1e-6;
+    const double eta_over_s_min = 1e-3;
     double eta_over_s;
     if (T_in_GeV < T_kink_in_GeV) {
         eta_over_s = (eta_over_s_at_kink
@@ -115,8 +115,10 @@ double TransportCoeffs::get_temperature_dependent_eta_over_s_sims(
 }
 
 
-double TransportCoeffs::get_zeta_over_s(const double T) const {
-    // input T [1/fm]
+double TransportCoeffs::get_zeta_over_s(const double T,
+                                        const double mu_B) const {
+    // input T [1/fm], mu_B [1/fm]
+    double muB_in_GeV = mu_B*hbarc;
     double zeta_over_s = 0.;
     if (DATA.T_dependent_bulk_to_s == 2) {
         zeta_over_s = get_temperature_dependent_zeta_over_s_duke(T);
@@ -149,7 +151,9 @@ double TransportCoeffs::get_zeta_over_s(const double T) const {
         const double peak_norm = DATA.bulk_10_max;
         const double B_width1 = DATA.bulk_10_width_low;      // GeV
         const double B_width2 = DATA.bulk_10_width_high;     // GeV
-        const double Tpeak = DATA.bulk_10_Tpeak;             // GeV
+        const double Tpeak = (DATA.bulk_10_Tpeak
+                              + DATA.bulk_10_Tpeak_muBcurv
+                                *muB_in_GeV*muB_in_GeV);   // GeV
         zeta_over_s = get_temperature_dependent_zeta_over_s_AsymGaussian(
                             T, peak_norm, B_width1, B_width2, Tpeak);
     }

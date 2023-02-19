@@ -6,9 +6,10 @@
 
 #include "util.h"
 #include "cell.h"
-#include "grid.h"
 #include "data.h"
 #include "eos.h"
+#include "evolve.h"
+#include "fields.h"
 #include "hydro_source_base.h"
 #include "read_in_parameters.h"
 #include "pretty_ostream.h"
@@ -32,9 +33,13 @@ class MUSIC {
 
     EOS eos;
 
-    SCGrid arena_prev;
-    SCGrid arena_current;
-    SCGrid arena_future;
+    std::shared_ptr<Evolve> evolve_ptr_;
+
+    Fields arenaFieldsPrev_;
+    Fields arenaFieldsCurr_;
+    Fields arenaFieldsNext_;
+    Fields freezeoutFieldPrev_;
+    Fields freezeoutFieldCurr_;
 
     std::shared_ptr<HydroSourceBase> hydro_source_terms_ptr;
 
@@ -57,6 +62,9 @@ class MUSIC {
 
     //! this is a shell function to run hydro
     int run_hydro();
+
+    void prepare_run_hydro_one_time_step();
+    int run_hydro_one_time_step(const int itau);
 
     //! this is a shell function to run Cooper-Frye
     int run_Cooper_Frye();
@@ -117,6 +125,11 @@ class MUSIC {
     bool is_boost_invariant() const {
         return(hydro_info_ptr->is_boost_invariant());
     }
+
+    bool getReRunHydro() const {return(DATA.reRunHydro);}
+    void setReRunHydro(bool flag) { DATA.reRunHydro = flag; }
+    int getReRunCount() const {return(DATA.reRunCount);}
+    void setReRunCount(int reRunCount) { DATA.reRunCount = reRunCount; }
 };
 
 #endif  // SRC_MUSIC_H_
